@@ -62,15 +62,26 @@ class Revision(models.Model):
     
     date_created = models.DateTimeField(auto_now_add=True,
                                         help_text="The date and time this revision was created.")
-    
-    user = models.ForeignKey(User,
+    user_profile = models.ForeignKey("core.UserProfile",
                              blank=True,
                              null=True,
                              help_text="The user who created this revision.")
     
     comment = models.TextField(blank=True,
                                help_text="A text comment on this revision.")
-    
+
+    def get_user(self):
+        if self.user_profile:
+            return self.user_profile
+        else:
+            return self._user_profile
+
+    def set_user(self, input):
+        from agilo2.core.models import UserProfile
+        self.user_profile = UserProfile.for_user(input)
+
+    user = property(get_user, set_user)
+
     def revert(self, delete=False):
         """Reverts all objects in this revision."""
         version_set = self.version_set.all()
