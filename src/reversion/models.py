@@ -74,7 +74,8 @@ class Revision(models.Model):
         if self.user_profile:
             return self.user_profile
         else:
-            return self._user_profile
+            if hasattr(self, _user_profile):
+                return self._user_profile
 
     def set_user(self, input):
         from agilo2.core.models import UserProfile
@@ -308,3 +309,15 @@ class Version(models.Model):
     def __unicode__(self):
         """Returns a unicode representation."""
         return self.object_repr
+
+    def get_previous(self):
+        """Returns the latest version of an object prior to the given date."""
+        from reversion.revisions import default_revision_manager
+        versions = default_revision_manager.get_for_object(self.object_version.object)
+        versions = versions.filter(revision__date_created__lt=self.revision.date_created)
+        try:
+            version = versions[0]
+        except IndexError:
+            raise Version.DoesNotExist
+        else:
+            return version
