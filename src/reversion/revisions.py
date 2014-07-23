@@ -95,7 +95,7 @@ class VersionAdapter(object):
         """Creates the version data to be saved to the version model."""
         object_id = force_text(obj.pk)
         db = db or DEFAULT_DB_ALIAS
-        content_type = ContentType.objects.db_manager(db).get_for_model(obj)
+        content_type = content_type = ContentType.objects.db_manager("licensing").get_for_model(obj)
         if has_int_pk(obj.__class__):
             object_id_int = int(obj.pk)
         else:
@@ -501,7 +501,7 @@ class RevisionManager(object):
         The results are returned with the most recent versions first.
         """
         db = db or DEFAULT_DB_ALIAS
-        content_type = ContentType.objects.db_manager(db).get_for_model(model)
+        content_type = content_type = ContentType.objects.db_manager("licensing").get_for_model(model)
         versions = self._get_versions(db).filter(
             content_type = content_type,
         ).select_related("revision")
@@ -558,7 +558,7 @@ class RevisionManager(object):
         """
         db = db or DEFAULT_DB_ALIAS
         model_db = model_db or db
-        content_type = ContentType.objects.db_manager(db).get_for_model(model_class)
+        content_type = content_type = ContentType.objects.db_manager("licensing").get_for_model(model_class)
         live_pk_queryset = model_class._default_manager.db_manager(model_db).all().values_list("pk", flat=True)
         versioned_objs = self._get_versions(db).filter(
             content_type = content_type,

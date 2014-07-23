@@ -55,16 +55,28 @@ class Revision(models.Model):
                                         verbose_name=_("date created"),
                                         help_text="The date and time this revision was created.")
 
-    user = models.ForeignKey(UserModel,
+    user_profile = models.ForeignKey("core.UserProfile",
                              blank=True,
                              null=True,
                              on_delete=models.SET_NULL,
-                             verbose_name=_("user"),
-                             help_text="The user who created this revision.")
+                             verbose_name=_("user_profile"),
+                             help_text="The user_profile who created this revision.")
 
     comment = models.TextField(blank=True,
                                verbose_name=_("comment"),
                                help_text="A text comment on this revision.")
+    def get_user(self):
+        if self.user_profile:
+            return self.user_profile
+        else:
+            if hasattr(self, '_user_profile'):
+                return self._user_profile
+
+    def set_user(self, input):
+        from agilo2.core.models import UserProfile
+        self.user_profile = UserProfile.for_user(input)
+
+    user = property(get_user, set_user)
 
     def revert(self, delete=False):
         """Reverts all objects in this revision."""
@@ -185,6 +197,18 @@ class Version(models.Model):
     def __str__(self):
         """Returns a unicode representation."""
         return self.object_repr
+
+    def get_previous(self):
+        """Returns the latest version of an object prior to the given date."""
+        from reversion.revisions import default_revision_manager
+        versions = default_revision_manager.get_for_object(self.object_version.object)
+        versions = versions.filter(revision__date_created__lt=self.revision.date_created)
+        try:
+            version = versions[0]
+        except IndexError:
+            raise Version.DoesNotExist
+        else:
+            return version
 
 
 # Version management signals.
